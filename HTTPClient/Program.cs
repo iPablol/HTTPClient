@@ -6,37 +6,37 @@ namespace HTTPClient
 {
     internal class Program
     {
+        private static TCPConnection connection = new(IPAddress.Loopback, 83);
+
         static void Main(string[] args)
         {
-            Test();
+            Run();
             string command = "";
-            while (command != "quit")
+            try
             {
-                command = Console.ReadLine() ?? "";
+                while (command != "quit")
+                {
+                    command = Console.ReadLine() ?? "";
+                    if (command == "read")
+                    {
+                        connection.Read();
+                    }
+                    if (command.Split(' ')[0] == "write")
+                    {
+                        connection.Write(command.Substring(command.IndexOf(' ') + 1));
+                    }
+                }
+            }
+            finally
+            {
+                connection.Disconnect();
             }
         }
 
-        static async void Test()
+
+        static async void Run()
         {
-            try
-            {
-                var ipEndPoint = new IPEndPoint(IPAddress.Loopback, 83);
-
-                using TcpClient client = new();
-                await client.ConnectAsync(ipEndPoint);
-                await using NetworkStream stream = client.GetStream();
-
-                var buffer = new byte[1_024];
-                int received = await stream.ReadAsync(buffer);
-
-                var message = Encoding.UTF8.GetString(buffer, 0, received);
-                Console.WriteLine($"Message received: \"{message}\"");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
+            bool connected = await connection.Connect();
         }
     }
 }
