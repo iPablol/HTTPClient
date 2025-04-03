@@ -16,5 +16,23 @@ namespace HTTPClient
 				address = Dns.GetHostEntry(host).AddressList.FirstOrDefault();
 			return address;
 		}
+
+		public static Uri? ToUri(this string url)
+		{
+			try
+			{
+				Uri uri = new(url);
+				return uri;
+			}
+			catch (UriFormatException ex)
+			{
+				Console.WriteLine("Invalid URL");
+				return null;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
+		}
 	}
 }

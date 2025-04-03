@@ -36,22 +36,16 @@ namespace HTTPClient.CLI
 		// Send a generic message
 		private static void Send(Command command) => Program.client.connection?.Write(command.BuildArgs());
 
-		private static (string method, Uri, string head) Get(Command command)
+		private static (string method, Uri) Get(Command command)
 		{
-			try
-			{
-				Uri uri = new(command.args.First());
-				return ("GET", uri, command.BuildArgs(1));
-			}
-			catch (UriFormatException ex)
-			{
-				Console.WriteLine("Invalid URL");
-				return default;
-			}
-			catch (Exception ex)
-			{
-				return default;
-			}
+			Uri? uri = command.args.First()?.ToUri();
+			return uri is null ? default : ("GET", uri);
+		}
+
+		private static (string method, Uri, string body) Post(Command command)
+		{
+			Uri? uri = command.args.First()?.ToUri();
+			return uri is null ? default : ("POST", uri, command.BuildArgs(skip: 1));
 		}
 
 		// Might be interesting to add aliases
@@ -61,7 +55,8 @@ namespace HTTPClient.CLI
 			{ "quit", Quit },
 			{ "bye", Quit },
 			//{ "write", Send }, // Should be separated into the HTTP methods
-			{ "get", Get }
+			{ "get", Get },
+			{ "post", Post },
 		};
 	}
 }

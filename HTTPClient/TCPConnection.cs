@@ -51,8 +51,8 @@ namespace HTTPClient
 
 		public void Disconnect()
 		{
-			client?.Close();
 			stream?.Close();
+			client?.Close();
 			Console.WriteLine("Connection closed");
 		}
 

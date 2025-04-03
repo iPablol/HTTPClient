@@ -39,8 +39,8 @@ namespace HTTPClient
 						case (string method, Uri url):
 							successful = Request(method, url, "", "");
 							break;
-						case (string method, Uri url, string head):
-							successful = Request(method, url, head, "");
+						case (string method, Uri url, string body):
+							successful = Request(method, url, "", body);
 							break;
 						case (string method, Uri url, string head, string body):
 							successful = Request(method, url, head, body);
@@ -78,7 +78,8 @@ namespace HTTPClient
 			}
 			if (await Connect(url))
 			{
-				await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head)}\r\n\r\n{body}");
+				
+				await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head, body)}\r\n{body}");
 				return true;
 			}
 			return false;
@@ -91,32 +92,6 @@ namespace HTTPClient
 			int port = url.Port;
 			connection = new TCPConnection(address, port);
 			return await connection.Connect();
-		}
-
-		private async Task<bool> WaitForConnection()
-		{
-			Console.WriteLine("Waiting for connection");
-			while (connection is null)
-			{
-				CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
-				switch (result.result)
-				{
-					case TCPConnection connection:
-						this.connection = connection;
-						break;
-					default: break;
-				}  
-			}
-			bool connected = await connection.Connect();
-			if (connected)
-			{
-				Console.WriteLine("Connection established!");
-			}
-			else
-			{
-				Console.WriteLine("Connection failed.");
-			}
-			return connected;
 		}
 
 
@@ -132,12 +107,17 @@ namespace HTTPClient
 			Console.WriteLine(response.Result);
 			connection?.Disconnect();
 		}
-		private string InjectHeaders(string head)
+		private string InjectHeaders(string head, string body = "")
 		{
 			StringBuilder sb = new(head);
 			sb.AppendLine("Host: localhost");
 			sb.AppendLine("User-Agent: custom/1.0");
 			sb.AppendLine("Accept: */*");
+			if (body.Length > 0)
+			{
+				sb.AppendLine("Content-Type: application/json");
+				sb.AppendLine($"Content-Length: {body.Length}");
+			}
 
 			return sb.ToString();
 		}
