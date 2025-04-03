@@ -16,6 +16,14 @@ namespace HTTPClient
         private TcpClient client = new();
         private NetworkStream? stream;
 
+        public bool connected
+        {
+            get
+            {
+                return client.Connected;
+            }
+        }
+
         public async Task<bool> Connect()
         {
             try
