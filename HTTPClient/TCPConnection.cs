@@ -42,7 +42,7 @@ namespace HTTPClient
 
 		public async Task<string> Read()
 		{
-			var buffer = new byte[1_024];
+			var buffer = new byte[1024 * 1024];
 			int received = await stream.ReadAsync(buffer);
 
 			string message = Encoding.UTF8.GetString(buffer, 0, received);
