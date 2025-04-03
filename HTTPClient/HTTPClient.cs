@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Command = HTTPClient.CLI.Command;
 using CLI = HTTPClient.CLI.CLI;
+using HTTPClient.CLI;
 
 namespace HTTPClient
 {
@@ -37,9 +38,14 @@ namespace HTTPClient
                 
                 while (true)
                 {
-                    switch (CLI.CLI.HandleCommand(new(Console.ReadLine() ?? "")))
+                    CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+                    switch (result.result)
                     {
-                        default: break;
+                        default:
+                            Task<string> response = AwaitResponse();
+                            response.Wait();
+                            HandleResponse(response);
+                            goto Connect;
                     }
                     //if (command == "read")
                     //{
@@ -62,8 +68,8 @@ namespace HTTPClient
             Console.WriteLine("Waiting for connection");
             while (connection is null)
             {
-                
-                switch (CLI.CLI.HandleCommand(new(Console.ReadLine() ?? "")))
+                CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+                switch (result.result)
                 {
                     case TCPConnection connection:
                         this.connection = connection;
@@ -81,6 +87,18 @@ namespace HTTPClient
                 Console.WriteLine("Connection failed.");
             }
             return connected;
+        }
+
+        private async Task<string> AwaitResponse()
+        {
+            string responseMessage = await connection.Read();
+            return responseMessage;
+        }
+
+        private void HandleResponse(Task<string> response)
+        {
+            Console.WriteLine(response.Result);
+            connection?.Disconnect();
         }
     }
 }

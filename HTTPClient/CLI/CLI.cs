@@ -9,22 +9,21 @@ namespace HTTPClient.CLI
 {
     internal static class CLI
     {
-        public static object? HandleCommand(Command command)
+        public static CommandResult HandleCommand(Command command)
         {
             if (commandDictionary.TryGetValue(command.keyword, out Delegate? function))
             {
-                return function.DynamicInvoke(command);
+                return new(command.keyword, function.DynamicInvoke(command));
             }
             Console.WriteLine("Invalid command");
-            return null;
+            return new("", null);
         }
 
         private static TCPConnection? Connect(Command command)
         {
             try
             {
-                IPAddress? address;
-                if (!IPAddress.TryParse(command.args[0], out address))
+                if (!IPAddress.TryParse(command.args[0], out IPAddress? address))
                     address = Dns.GetHostEntry(command.args[0]).AddressList[0];
                 int port = int.Parse(command.args[1]);
                 return address is null ? null : new TCPConnection(address, port);

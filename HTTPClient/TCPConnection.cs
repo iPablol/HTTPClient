@@ -10,7 +10,7 @@ namespace HTTPClient
 {
     public class TCPConnection(IPAddress address, int port)
     {
-        private IPAddress address = address;
+        private IPAddress address = IPAddress.IsLoopback(address) ? IPAddress.Loopback : address;
         private int port = port;
 
         private TcpClient client = new();
@@ -28,9 +28,7 @@ namespace HTTPClient
         {
             try
             {
-                var ipEndPoint = new IPEndPoint(IPAddress.Loopback, 83);
-
-                await client.ConnectAsync(new IPEndPoint(this.address, this.port));
+                await client.ConnectAsync(new IPEndPoint(address, port));
                 stream = client.GetStream();
                 Console.WriteLine($"Opened connection to {address.ToString()} in port {port}");
                 return true;
@@ -42,21 +40,20 @@ namespace HTTPClient
             }
         }
 
-        public async Task<bool> Read()
+        public async Task<string> Read()
         {
             var buffer = new byte[1_024];
-            Console.WriteLine("Reading buffer...");
             int received = await stream.ReadAsync(buffer);
 
-            var message = Encoding.UTF8.GetString(buffer, 0, received);
-            Console.WriteLine($"Message received: \"{message}\"");
-            return true;
+            string message = Encoding.UTF8.GetString(buffer, 0, received);
+            return message;
         }
 
         public void Disconnect()
         {
             client?.Close();
             stream?.Close();
+            Console.WriteLine("Connection closed");
         }
 
         public async void Write(string message) 
