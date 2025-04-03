@@ -23,21 +23,12 @@ namespace HTTPClient
         private const string httpVersion = "HTTP/1.1";
 
         public TCPConnection? connection { get; private set; } = null;
-        public HTTPClient()
-        {
-        }
 
 
         public void Run()
         {
             try
             {
-               
-                //Connect:
-                //connection = null;
-                //Task<bool> connect = WaitForConnection();
-                //connect.Wait();
-                //if (!connect.Result) goto Connect;
                 
                 while (true)
                 {

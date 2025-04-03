@@ -15,8 +15,9 @@ namespace HTTPClient.CLI
             {
                 return new(command.keyword, function.DynamicInvoke(command));
             }
+            if (command.keyword == "") return default;
             Console.WriteLine("Invalid command");
-            return new("", null);
+            return default;
         }
 
         private static TCPConnection? Connect(Command command)
