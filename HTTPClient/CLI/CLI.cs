@@ -23,8 +23,7 @@ namespace HTTPClient.CLI
         {
             try
             {
-                if (!IPAddress.TryParse(command.args[0], out IPAddress? address))
-                    address = Dns.GetHostEntry(command.args[0]).AddressList[0];
+                IPAddress? address = Utils.ResolveHost(command.args.First());
                 int port = int.Parse(command.args[1]);
                 return address is null ? null : new TCPConnection(address, port);
             }
@@ -39,12 +38,32 @@ namespace HTTPClient.CLI
         // Send a generic message
         private static void Send(Command command) => Program.client.connection?.Write(command.BuildArgs());
 
+        private static (string method, Uri, string head) Get(Command command)
+        {
+            try
+            {
+                Uri uri = new(command.args.First());
+                return ("GET", uri, command.BuildArgs(1));
+            }
+            catch (UriFormatException ex)
+            {
+                Console.WriteLine("Invalid URL");
+                return default;
+            }
+            catch (Exception ex)
+            {
+                return default;
+            }
+        }
+
         // Might be interesting to add aliases
         private static readonly Dictionary<string, Delegate> commandDictionary = new()
         {
-            { "connect", Connect },
+            //{ "connect", Connect }, // Should be included inside HTTP methods
             { "quit", Quit },
-            { "write", Send }
+            { "bye", Quit },
+            //{ "write", Send }, // Should be separated into the HTTP methods
+            { "get", Get }
         };
     }
 }

@@ -20,6 +20,8 @@ namespace HTTPClient
             }
         }
 
+        private const string httpVersion = "HTTP/1.1";
+
         public TCPConnection? connection { get; private set; } = null;
         public HTTPClient()
         {
@@ -30,27 +32,37 @@ namespace HTTPClient
         {
             try
             {
-                Connect:
-                connection = null;
-                Task<bool> connect = WaitForConnection();
-                connect.Wait();
-                if (!connect.Result) goto Connect;
+               
+                //Connect:
+                //connection = null;
+                //Task<bool> connect = WaitForConnection();
+                //connect.Wait();
+                //if (!connect.Result) goto Connect;
                 
                 while (true)
                 {
                     CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+                    Task<bool>? successful = null;
                     switch (result.result)
                     {
+                        case (string method, Uri url, string head):
+                            successful = Request(method, url, head, "");
+                            break;
+                        case (string method, Uri url, string head, string body):
+                            successful = Request(method, url, head, body);
+                            break;
                         default:
-                            Task<string> response = AwaitResponse();
-                            response.Wait();
-                            HandleResponse(response);
-                            goto Connect;
+                            
+                            break;
                     }
-                    //if (command == "read")
-                    //{
-                    //    connection.Read();
-                    //}
+                    if (successful is null) continue;
+                    successful.Wait();
+                    if (successful.Result)
+                    {
+                        Task<string> response = AwaitResponse();
+                        response.Wait();
+                        HandleResponse(response);
+                    }
                 }
             }
             catch (Exception ex)
@@ -59,8 +71,32 @@ namespace HTTPClient
             }
             finally
             {
-                connection.Disconnect();
+                connection?.Disconnect();
             }
+        }
+
+        private async Task<bool> Request(string method, Uri url, string head, string body)
+        {
+            if (url.Scheme != "http")
+            {
+                Console.WriteLine("Unsuported protocol");
+                return false;
+            }
+            if (await Connect(url))
+            {
+                await connection.Write($"{method} / {httpVersion}\r\n{head}\r\n\r\n{body}");
+                return true;
+            }
+            return false;
+        }
+
+        private async Task<bool> Connect(Uri url)
+        {
+            IPAddress? address = Utils.ResolveHost(url.Host);
+            if (address is null) { Console.WriteLine("Error connecting to host"); return false; }
+            int port = url.Port;
+            connection = new TCPConnection(address, port);
+            return await connection.Connect();
         }
 
         private async Task<bool> WaitForConnection()
@@ -97,6 +133,7 @@ namespace HTTPClient
 
         private void HandleResponse(Task<string> response)
         {
+            // Handle error codes here
             Console.WriteLine(response.Result);
             connection?.Disconnect();
         }

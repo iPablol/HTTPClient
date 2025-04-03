@@ -12,7 +12,7 @@ namespace HTTPClient.CLI
 
         public string[] args { get; private set; }
 
-        public string BuildArgs() => String.Join(" ", args);
+        public string BuildArgs(int skip = 0) => String.Join(" ", args.Skip(skip));
 
         public Command(string command)
         {

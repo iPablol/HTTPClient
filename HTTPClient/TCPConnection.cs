@@ -56,10 +56,7 @@ namespace HTTPClient
             Console.WriteLine("Connection closed");
         }
 
-        public async void Write(string message) 
-        {
-            await stream.WriteAsync(Encoding.UTF8.GetBytes(message));
-        }
+        public async Task Write(string message) => await stream.WriteAsync(Encoding.UTF8.GetBytes(message));
     }
 
 }
