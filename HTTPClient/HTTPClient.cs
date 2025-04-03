@@ -36,6 +36,9 @@ namespace HTTPClient
                     Task<bool>? successful = null;
                     switch (result.result)
                     {
+                        case (string method, Uri url):
+                            successful = Request(method, url, "", "");
+                            break;
                         case (string method, Uri url, string head):
                             successful = Request(method, url, head, "");
                             break;
@@ -75,7 +78,7 @@ namespace HTTPClient
             }
             if (await Connect(url))
             {
-                await connection.Write($"{method} / {httpVersion}\r\n{head}\r\n\r\n{body}");
+                await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head)}\r\n\r\n{body}");
                 return true;
             }
             return false;
@@ -116,6 +119,7 @@ namespace HTTPClient
             return connected;
         }
 
+
         private async Task<string> AwaitResponse()
         {
             string responseMessage = await connection.Read();
@@ -128,5 +132,33 @@ namespace HTTPClient
             Console.WriteLine(response.Result);
             connection?.Disconnect();
         }
+        private string InjectHeaders(string head)
+        {
+            StringBuilder sb = new(head);
+            sb.AppendLine("Host: localhost");
+            sb.AppendLine("User-Agent: custom/1.0");
+            sb.AppendLine("Accept: */*");
+
+            return sb.ToString();
+        }
+
+        private string GetTarget(Uri url) => form switch
+        {
+            TARGET_FORM.ORIGIN => url.AbsolutePath,
+            TARGET_FORM.ABSOLUTE => url.ToString(),
+            TARGET_FORM.AUTHORITY => $"{url.Host}:{url.Port}",
+            TARGET_FORM.ASTERISK => "*",
+            _ => "/"
+        };
+
+        private enum TARGET_FORM
+        {
+            ORIGIN,
+            ABSOLUTE,
+            AUTHORITY,
+            ASTERISK
+        }
+
+        private TARGET_FORM form = TARGET_FORM.ORIGIN;
     }
 }
