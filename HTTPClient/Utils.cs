@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace HTTPClient
 {
-    internal static class Utils
-    {
-        public static IPAddress? ResolveHost(string host)
-        {
-            if (!IPAddress.TryParse(host, out IPAddress? address))
-                address = Dns.GetHostEntry(host).AddressList.FirstOrDefault();
-            return address;
-        }
-    }
+	internal static class Utils
+	{
+		public static IPAddress? ResolveHost(string host)
+		{
+			if (!IPAddress.TryParse(host, out IPAddress? address))
+				address = Dns.GetHostEntry(host).AddressList.FirstOrDefault();
+			return address;
+		}
+	}
 }

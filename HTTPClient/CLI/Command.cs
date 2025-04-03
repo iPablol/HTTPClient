@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace HTTPClient.CLI
 {
-    internal class Command
-    {
-        public string keyword { get; private set; }
+	internal class Command
+	{
+		public string keyword { get; private set; }
 
-        public string[] args { get; private set; }
+		public string[] args { get; private set; }
 
-        public string BuildArgs(int skip = 0) => String.Join(" ", args.Skip(skip));
+		public string BuildArgs(int skip = 0) => String.Join(" ", args.Skip(skip));
 
-        public Command(string command)
-        {
-            string[] args = command.Split(' ');
-            keyword = args[0].ToLower();
-            this.args = args.Skip(1).ToArray();
-        }
-    }
+		public Command(string command)
+		{
+			string[] args = command.Split(' ');
+			keyword = args[0].ToLower();
+			this.args = args.Skip(1).ToArray();
+		}
+	}
 }

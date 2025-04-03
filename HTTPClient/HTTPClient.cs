@@ -10,155 +10,155 @@ using HTTPClient.CLI;
 
 namespace HTTPClient
 {
-    public class HTTPClient
-    {
-        public bool connected
-        {
-            get
-            {
-                return connection?.connected ?? false;
-            }
-        }
+	public class HTTPClient
+	{
+		public bool connected
+		{
+			get
+			{
+				return connection?.connected ?? false;
+			}
+		}
 
-        private const string httpVersion = "HTTP/1.1";
+		private const string httpVersion = "HTTP/1.1";
 
-        public TCPConnection? connection { get; private set; } = null;
-
-
-        public void Run()
-        {
-            try
-            {
-                
-                while (true)
-                {
-                    CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
-                    Task<bool>? successful = null;
-                    switch (result.result)
-                    {
-                        case (string method, Uri url):
-                            successful = Request(method, url, "", "");
-                            break;
-                        case (string method, Uri url, string head):
-                            successful = Request(method, url, head, "");
-                            break;
-                        case (string method, Uri url, string head, string body):
-                            successful = Request(method, url, head, body);
-                            break;
-                        default:
-                            
-                            break;
-                    }
-                    if (successful is null) continue;
-                    successful.Wait();
-                    if (successful.Result)
-                    {
-                        Task<string> response = AwaitResponse();
-                        response.Wait();
-                        HandleResponse(response);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex}");
-            }
-            finally
-            {
-                connection?.Disconnect();
-            }
-        }
-
-        private async Task<bool> Request(string method, Uri url, string head, string body)
-        {
-            if (url.Scheme != "http")
-            {
-                Console.WriteLine("Unsuported protocol");
-                return false;
-            }
-            if (await Connect(url))
-            {
-                await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head)}\r\n\r\n{body}");
-                return true;
-            }
-            return false;
-        }
-
-        private async Task<bool> Connect(Uri url)
-        {
-            IPAddress? address = Utils.ResolveHost(url.Host);
-            if (address is null) { Console.WriteLine("Error connecting to host"); return false; }
-            int port = url.Port;
-            connection = new TCPConnection(address, port);
-            return await connection.Connect();
-        }
-
-        private async Task<bool> WaitForConnection()
-        {
-            Console.WriteLine("Waiting for connection");
-            while (connection is null)
-            {
-                CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
-                switch (result.result)
-                {
-                    case TCPConnection connection:
-                        this.connection = connection;
-                        break;
-                    default: break;
-                }  
-            }
-            bool connected = await connection.Connect();
-            if (connected)
-            {
-                Console.WriteLine("Connection established!");
-            }
-            else
-            {
-                Console.WriteLine("Connection failed.");
-            }
-            return connected;
-        }
+		public TCPConnection? connection { get; private set; } = null;
 
 
-        private async Task<string> AwaitResponse()
-        {
-            string responseMessage = await connection.Read();
-            return responseMessage;
-        }
+		public void Run()
+		{
+			try
+			{
+				
+				while (true)
+				{
+					CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+					Task<bool>? successful = null;
+					switch (result.result)
+					{
+						case (string method, Uri url):
+							successful = Request(method, url, "", "");
+							break;
+						case (string method, Uri url, string head):
+							successful = Request(method, url, head, "");
+							break;
+						case (string method, Uri url, string head, string body):
+							successful = Request(method, url, head, body);
+							break;
+						default:
+							
+							break;
+					}
+					if (successful is null) continue;
+					successful.Wait();
+					if (successful.Result)
+					{
+						Task<string> response = AwaitResponse();
+						response.Wait();
+						HandleResponse(response);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error: {ex}");
+			}
+			finally
+			{
+				connection?.Disconnect();
+			}
+		}
 
-        private void HandleResponse(Task<string> response)
-        {
-            // Handle error codes here
-            Console.WriteLine(response.Result);
-            connection?.Disconnect();
-        }
-        private string InjectHeaders(string head)
-        {
-            StringBuilder sb = new(head);
-            sb.AppendLine("Host: localhost");
-            sb.AppendLine("User-Agent: custom/1.0");
-            sb.AppendLine("Accept: */*");
+		private async Task<bool> Request(string method, Uri url, string head, string body)
+		{
+			if (url.Scheme != "http")
+			{
+				Console.WriteLine("Unsuported protocol");
+				return false;
+			}
+			if (await Connect(url))
+			{
+				await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head)}\r\n\r\n{body}");
+				return true;
+			}
+			return false;
+		}
 
-            return sb.ToString();
-        }
+		private async Task<bool> Connect(Uri url)
+		{
+			IPAddress? address = Utils.ResolveHost(url.Host);
+			if (address is null) { Console.WriteLine("Error connecting to host"); return false; }
+			int port = url.Port;
+			connection = new TCPConnection(address, port);
+			return await connection.Connect();
+		}
 
-        private string GetTarget(Uri url) => form switch
-        {
-            TARGET_FORM.ORIGIN => url.AbsolutePath,
-            TARGET_FORM.ABSOLUTE => url.ToString(),
-            TARGET_FORM.AUTHORITY => $"{url.Host}:{url.Port}",
-            TARGET_FORM.ASTERISK => "*",
-            _ => "/"
-        };
+		private async Task<bool> WaitForConnection()
+		{
+			Console.WriteLine("Waiting for connection");
+			while (connection is null)
+			{
+				CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+				switch (result.result)
+				{
+					case TCPConnection connection:
+						this.connection = connection;
+						break;
+					default: break;
+				}  
+			}
+			bool connected = await connection.Connect();
+			if (connected)
+			{
+				Console.WriteLine("Connection established!");
+			}
+			else
+			{
+				Console.WriteLine("Connection failed.");
+			}
+			return connected;
+		}
 
-        private enum TARGET_FORM
-        {
-            ORIGIN,
-            ABSOLUTE,
-            AUTHORITY,
-            ASTERISK
-        }
 
-        private TARGET_FORM form = TARGET_FORM.ORIGIN;
-    }
+		private async Task<string> AwaitResponse()
+		{
+			string responseMessage = await connection.Read();
+			return responseMessage;
+		}
+
+		private void HandleResponse(Task<string> response)
+		{
+			// Handle error codes here
+			Console.WriteLine(response.Result);
+			connection?.Disconnect();
+		}
+		private string InjectHeaders(string head)
+		{
+			StringBuilder sb = new(head);
+			sb.AppendLine("Host: localhost");
+			sb.AppendLine("User-Agent: custom/1.0");
+			sb.AppendLine("Accept: */*");
+
+			return sb.ToString();
+		}
+
+		private string GetTarget(Uri url) => form switch
+		{
+			TARGET_FORM.ORIGIN => url.AbsolutePath,
+			TARGET_FORM.ABSOLUTE => url.ToString(),
+			TARGET_FORM.AUTHORITY => $"{url.Host}:{url.Port}",
+			TARGET_FORM.ASTERISK => "*",
+			_ => "/"
+		};
+
+		private enum TARGET_FORM
+		{
+			ORIGIN,
+			ABSOLUTE,
+			AUTHORITY,
+			ASTERISK
+		}
+
+		private TARGET_FORM form = TARGET_FORM.ORIGIN;
+	}
 }
