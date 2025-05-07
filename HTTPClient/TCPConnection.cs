@@ -30,7 +30,7 @@ namespace HTTPClient
 			{
 				await client.ConnectAsync(new IPEndPoint(address, port));
 				stream = client.GetStream();
-				Console.WriteLine($"Opened connection to {address.ToString()} in port {port}");
+				//Console.WriteLine($"Opened connection to {address.ToString()} in port {port}");
 				return true;
 			}
 			catch (Exception ex)
@@ -53,7 +53,7 @@ namespace HTTPClient
 		{
 			stream?.Close();
 			client?.Close();
-			Console.WriteLine("Connection closed");
+			//Console.WriteLine("Connection closed");
 		}
 
 		public async Task Write(string message) => await stream.WriteAsync(Encoding.UTF8.GetBytes(message));

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Command = HTTPClient.CLI.Command;
 using CLI = HTTPClient.CLI.CLI;
 using HTTPClient.CLI;
+using System.Text.RegularExpressions;
 
 namespace HTTPClient
 {
@@ -29,7 +30,6 @@ namespace HTTPClient
 		{
 			try
 			{
-				
 				while (true)
 				{
 					CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
@@ -78,7 +78,6 @@ namespace HTTPClient
 			}
 			if (await Connect(url))
 			{
-				
 				await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head, body)}\r\n{body}");
 				return true;
 			}
@@ -101,12 +100,36 @@ namespace HTTPClient
 			return responseMessage;
 		}
 
-		private void HandleResponse(Task<string> response)
+		private void HandleResponse(Task<string> message)
 		{
-			// Handle error codes here
-			Console.WriteLine(response.Result);
+			var response = ParseResponse(message.Result);
+			if (response.code.StartsWith('4') || response.code.StartsWith('5'))
+			{
+				Console.WriteLine($"{response.code}, {response.message}");
+			}
+            else
+            {
+				Console.WriteLine(response.body); 
+            }
 			connection?.Disconnect();
 		}
+
+		private (string version, string code, string message, string[] headers, string body) ParseResponse(string response)
+		{
+			Regex regex = new("(.*) ([1-5][0-9][0-9]) (.*)\r\n(.*)\r\n(.*)");
+			try
+			{
+				if (regex.IsMatch(response))
+				{
+					var matches = regex.Match(response).Groups.Values.Select(x => x.Value).ToArray();
+					return (matches[1], matches[2], matches[3], matches[4].Split('\n'), matches[5]);
+				}
+			}
+			catch
+			{ }
+			throw new FormatException("Response was malformatted");
+		}
+
 		private string InjectHeaders(string head, string body = "")
 		{
 			StringBuilder sb = new(head);
