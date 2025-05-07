@@ -34,7 +34,7 @@ namespace HTTPClient.CLI
 		private static void Quit(Command command) => Environment.Exit(0);
 
 		// Send a generic message
-		private static void Send(Command command) => Program.client.connection?.Write(command.BuildArgs());
+		private static void Send(Command command) => HTTPClient.connection?.Write(command.BuildArgs());
 
 		private static (string method, Uri) Get(Command command)
 		{

@@ -11,9 +11,9 @@ using System.Text.RegularExpressions;
 
 namespace HTTPClient
 {
-	public class HTTPClient
+	public static class HTTPClient
 	{
-		public bool connected
+		public static bool connected
 		{
 			get
 			{
@@ -23,10 +23,10 @@ namespace HTTPClient
 
 		private const string httpVersion = "HTTP/1.1";
 
-		public TCPConnection? connection { get; private set; } = null;
+		public static TCPConnection? connection { get; private set; } = null;
 
 
-		public void Run()
+		public static void Run()
 		{
 			try
 			{
@@ -69,7 +69,7 @@ namespace HTTPClient
 			}
 		}
 
-		private async Task<bool> Request(string method, Uri url, string head, string body)
+		private static async Task<bool> Request(string method, Uri url, string head, string body)
 		{
 			if (url.Scheme != "http")
 			{
@@ -84,7 +84,7 @@ namespace HTTPClient
 			return false;
 		}
 
-		private async Task<bool> Connect(Uri url)
+		private static async Task<bool> Connect(Uri url)
 		{
 			IPAddress? address = Utils.ResolveHost(url.Host);
 			if (address is null) { Console.WriteLine("Error connecting to host"); return false; }
@@ -94,13 +94,13 @@ namespace HTTPClient
 		}
 
 
-		private async Task<string> AwaitResponse()
+		private static async Task<string> AwaitResponse()
 		{
 			string responseMessage = await connection.Read();
 			return responseMessage;
 		}
 
-		private void HandleResponse(Task<string> message)
+		private static void HandleResponse(Task<string> message)
 		{
 			var response = ParseResponse(message.Result);
 			if (response.code.StartsWith('4') || response.code.StartsWith('5'))
@@ -114,7 +114,7 @@ namespace HTTPClient
 			connection?.Disconnect();
 		}
 
-		private (string version, string code, string message, string[] headers, string body) ParseResponse(string response)
+		private static (string version, string code, string message, string[] headers, string body) ParseResponse(string response)
 		{
 			Regex regex = new("(.*) ([1-5][0-9][0-9]) (.*)\r\n(.*)\r\n(.*)");
 			try
@@ -130,7 +130,7 @@ namespace HTTPClient
 			throw new FormatException("Response was malformatted");
 		}
 
-		private string InjectHeaders(string head, string body = "")
+		private static string InjectHeaders(string head, string body = "")
 		{
 			StringBuilder sb = new(head);
 			sb.AppendLine("Host: localhost");
@@ -145,7 +145,7 @@ namespace HTTPClient
 			return sb.ToString();
 		}
 
-		private string GetTarget(Uri url) => form switch
+		private static string GetTarget(Uri url) => form switch
 		{
 			TARGET_FORM.ORIGIN => url.AbsolutePath,
 			TARGET_FORM.ABSOLUTE => url.ToString(),
@@ -154,6 +154,7 @@ namespace HTTPClient
 			_ => "/"
 		};
 
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages#http2_messages
 		private enum TARGET_FORM
 		{
 			ORIGIN,
@@ -162,6 +163,6 @@ namespace HTTPClient
 			ASTERISK
 		}
 
-		private TARGET_FORM form = TARGET_FORM.ORIGIN;
+		private static TARGET_FORM form = TARGET_FORM.ORIGIN;
 	}
 }
