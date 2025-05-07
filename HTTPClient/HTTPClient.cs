@@ -21,6 +21,8 @@ namespace HTTPClient
 			}
 		}
 
+		internal static string key = "";
+
 		private const string httpVersion = "HTTP/1.1";
 
 		public static TCPConnection? connection { get; private set; } = null;
@@ -78,6 +80,7 @@ namespace HTTPClient
 			}
 			if (await Connect(url))
 			{
+				// Apparently InjectHeaders adds an extra \r\n
 				await connection.Write($"{method} {GetTarget(url)} {httpVersion}\r\n{InjectHeaders(head, body)}\r\n{body}");
 				return true;
 			}
@@ -136,6 +139,8 @@ namespace HTTPClient
 			sb.AppendLine("Host: localhost");
 			sb.AppendLine("User-Agent: custom/1.0");
 			sb.AppendLine("Accept: */*");
+			// https://www.rfc-editor.org/rfc/rfc6648#section-3 prefixing headers with 'X-' is discouraged
+			if (key != "") sb.AppendLine($"Key: {key}");
 			if (body.Length > 0)
 			{
 				sb.AppendLine("Content-Type: application/json");

@@ -48,6 +48,8 @@ namespace HTTPClient.CLI
 			return uri is null ? default : ("POST", uri, command.BuildArgs(skip: 1));
 		}
 
+		private static void ChangeKey(Command command) => HTTPClient.key = command.args.First();
+
 		// Might be interesting to add aliases
 		private static readonly Dictionary<string, Delegate> commandDictionary = new()
 		{
@@ -57,6 +59,7 @@ namespace HTTPClient.CLI
 			//{ "write", Send }, // Should be separated into the HTTP methods
 			{ "get", Get },
 			{ "post", Post },
+			{ "key", ChangeKey }
 		};
 	}
 }
