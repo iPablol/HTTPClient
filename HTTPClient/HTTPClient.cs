@@ -106,14 +106,14 @@ namespace HTTPClient
 		private static void HandleResponse(Task<string> message)
 		{
 			var response = ParseResponse(message.Result);
-			if (response.code.StartsWith('4') || response.code.StartsWith('5'))
-			{
-				Console.WriteLine($"{response.code}, {response.message}");
-			}
-            else
-            {
-				Console.WriteLine(response.body); 
-            }
+			Console.WriteLine($"{response.code}, {response.message}");
+			Console.WriteLine(response.body); 
+			//if (response.code.StartsWith('4') || response.code.StartsWith('5'))
+			//{
+			//}
+   //         else
+   //         {
+   //         }
 			connection?.Disconnect();
 		}
 
