@@ -42,10 +42,28 @@ namespace HTTPClient.CLI
 			return uri is null ? default : ("GET", uri);
 		}
 
+		private static (string method, Uri) Head(Command command)
+		{
+			Uri? uri = command.args.First()?.ToUri();
+			return uri is null ? default : ("HEAD", uri);
+		}
+
 		private static (string method, Uri, string body) Post(Command command)
 		{
 			Uri? uri = command.args.First()?.ToUri();
 			return uri is null ? default : ("POST", uri, command.BuildArgs(skip: 1));
+		}
+
+		private static (string method, Uri, string body) Put(Command command)
+		{
+			Uri? uri = command.args.First()?.ToUri();
+			return uri is null ? default : ("PUT", uri, command.BuildArgs(skip: 1));
+		}
+
+		private static (string method, Uri, string body) Delete(Command command)
+		{
+			Uri? uri = command.args.First()?.ToUri();
+			return uri is null ? default : ("DELETE", uri, command.BuildArgs(skip: 1));
 		}
 
 		private static void ChangeKey(Command command) => HTTPClient.key = command.args.First();
@@ -58,7 +76,10 @@ namespace HTTPClient.CLI
 			{ "bye", Quit },
 			//{ "write", Send }, // Should be separated into the HTTP methods
 			{ "get", Get },
+			{ "head", Head },
 			{ "post", Post },
+			{ "put", Put },
+			{ "delete", Delete },
 			{ "key", ChangeKey }
 		};
 	}
