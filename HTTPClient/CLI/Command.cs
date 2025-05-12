@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HTTPClient.CLI
 {
-	internal class Command
+	internal record struct Command
 	{
 		public string keyword { get; private set; }
 

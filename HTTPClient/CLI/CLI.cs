@@ -1,5 +1,6 @@
 ﻿
 using System.Net;
+using System.Reflection;
 
 
 namespace HTTPClient.CLI
@@ -8,33 +9,25 @@ namespace HTTPClient.CLI
 	{
 		public static CommandResult HandleCommand(Command command)
 		{
-			if (commandDictionary.TryGetValue(command.keyword, out Delegate? function))
-			{
-				return new(command.keyword, function.DynamicInvoke(command));
-			}
-			if (command.keyword == "") return default;
-			Console.WriteLine("Invalid command");
-			return default;
-		}
-
-		private static TCPConnection? Connect(Command command)
-		{
 			try
 			{
-				IPAddress? address = Utils.ResolveHost(command.args.First());
-				int port = int.Parse(command.args[1]);
-				return address is null ? null : new TCPConnection(address, port);
+				return new(command.keyword, (from x in typeof(CLI).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+											 where x.Name.ToLower() == command.keyword
+											 select x)?.First().Invoke(null, [command]));
 			}
 			catch
 			{
-				return null;
+				if (aliasDictionary.TryGetValue(command.keyword, out Delegate? function))
+				{
+					return new(command.keyword, function.DynamicInvoke(command));
+				}
+				if (command.keyword == "") return default;
+				Console.WriteLine("Invalid command");
+				return default;
 			}
 		}
 
 		private static void Quit(Command command) => Environment.Exit(0);
-
-		// Send a generic message
-		private static void Send(Command command) => HTTPClient.connection?.Write(command.BuildArgs());
 
 		private static (string method, Uri) Get(Command command)
 		{
@@ -68,18 +61,9 @@ namespace HTTPClient.CLI
 
 		private static void ChangeKey(Command command) => HTTPClient.key = command.args.First();
 
-		// Might be interesting to add aliases
-		private static readonly Dictionary<string, Delegate> commandDictionary = new()
+		private static readonly Dictionary<string, Delegate> aliasDictionary = new()
 		{
-			//{ "connect", Connect }, // Should be included inside HTTP methods
-			{ "quit", Quit },
 			{ "bye", Quit },
-			//{ "write", Send }, // Should be separated into the HTTP methods
-			{ "get", Get },
-			{ "head", Head },
-			{ "post", Post },
-			{ "put", Put },
-			{ "delete", Delete },
 			{ "key", ChangeKey }
 		};
 	}
