@@ -30,44 +30,44 @@ namespace HTTPClient
 
 		public static void Run()
 		{
-			try
+			while (true)
 			{
-				while (true)
+				try
 				{
-					CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
-					Task<bool>? successful = null;
-					switch (result.result)
-					{
-						case (string method, Uri url):
-							successful = Request(method, url, "", "");
-							break;
-						case (string method, Uri url, string body):
-							successful = Request(method, url, "", body);
-							break;
-						case (string method, Uri url, string head, string body):
-							successful = Request(method, url, head, body);
-							break;
-						default:
+						CommandResult result = CLI.CLI.HandleCommand(new(Console.ReadLine() ?? ""));
+						Task<bool>? successful = null;
+						switch (result.result)
+						{
+							case (string method, Uri url):
+								successful = Request(method, url, "", "");
+								break;
+							case (string method, Uri url, string body):
+								successful = Request(method, url, "", body);
+								break;
+							case (string method, Uri url, string head, string body):
+								successful = Request(method, url, head, body);
+								break;
+							default:
 							
-							break;
-					}
-					if (successful is null) continue;
-					successful.Wait();
-					if (successful.Result)
-					{
-						Task<string> response = AwaitResponse();
-						response.Wait();
-						HandleResponse(response);
-					}
+								break;
+						}
+						if (successful is null) continue;
+						successful.Wait();
+						if (successful.Result)
+						{
+							Task<string> response = AwaitResponse();
+							response.Wait();
+							HandleResponse(response);
+						}
 				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error: {ex}");
-			}
-			finally
-			{
-				connection?.Disconnect();
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error: {ex.Message}");
+				}
+				finally
+				{
+					connection?.Disconnect();
+				}
 			}
 		}
 
