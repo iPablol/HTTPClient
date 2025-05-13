@@ -57,7 +57,7 @@ namespace HTTPClient
 						{
 							Task<string> response = AwaitResponse();
 							response.Wait();
-							HandleResponse(response);
+							HandleResponse(response.Result);
 						}
 				}
 				catch (Exception ex)
@@ -103,29 +103,29 @@ namespace HTTPClient
 			return responseMessage;
 		}
 
-		private static void HandleResponse(Task<string> message)
+		private static void HandleResponse(string message)
 		{
-			var response = ParseResponse(message.Result);
+			var response = ParseResponse(message);
 			Console.WriteLine($"{response.code}, {response.message}");
-			Console.WriteLine(response.body); 
+			Console.WriteLine(response.body);
 			//if (response.code.StartsWith('4') || response.code.StartsWith('5'))
 			//{
 			//}
-   //         else
-   //         {
-   //         }
+			//else
+			//{
+			//}
 			connection?.Disconnect();
 		}
 
 		private static (string version, string code, string message, string[] headers, string body) ParseResponse(string response)
 		{
-			Regex regex = new("(.*) ([1-5][0-9][0-9]) (.*)\r\n(.*)\r\n(.*)");
+			Regex regex = new("(.*) ([1-5][0-9][0-9]) (.*)\r\n((?:[^\\r\\n]+\\r\\n)*?)\\r\\n(.*)");
 			try
 			{
 				if (regex.IsMatch(response))
 				{
 					var matches = regex.Match(response).Groups.Values.Select(x => x.Value).ToArray();
-					return (matches[1], matches[2], matches[3], matches[4].Split('\n'), matches[5]);
+					return (matches[1], matches[2], matches[3], matches[4].Split("\r\n"), matches[5]);
 				}
 			}
 			catch
@@ -144,7 +144,7 @@ namespace HTTPClient
 			if (body.Length > 0)
 			{
 				sb.AppendLine("Content-Type: application/json");
-				sb.AppendLine($"Content-Length: {body.Length}");
+				sb.AppendLine($"Content-Length: {Encoding.UTF8.GetBytes(body).Length}");
 			}
 
 			return sb.ToString();
