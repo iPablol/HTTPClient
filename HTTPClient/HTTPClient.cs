@@ -8,6 +8,7 @@ using Command = HTTPClient.CLI.Command;
 using CLI = HTTPClient.CLI.CLI;
 using HTTPClient.CLI;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace HTTPClient
 {
@@ -143,12 +144,13 @@ namespace HTTPClient
 			if (key != "") sb.AppendLine($"Key: {key}");
 			if (body.Length > 0)
 			{
-				sb.AppendLine("Content-Type: application/json");
+				sb.AppendLine("Content-Type: " + (body.IsValidJson() ? "text/plain" : "application/json"));
 				sb.AppendLine($"Content-Length: {Encoding.UTF8.GetBytes(body).Length}");
 			}
 
 			return sb.ToString();
 		}
+
 
 		private static string GetTarget(Uri url) => form switch
 		{

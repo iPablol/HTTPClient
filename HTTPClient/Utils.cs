@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace HTTPClient
@@ -32,6 +33,22 @@ namespace HTTPClient
 			catch (Exception ex)
 			{
 				return null;
+			}
+		}
+
+		internal static bool IsValidJson(this string text)
+		{
+			if (string.IsNullOrWhiteSpace(text))
+				return false;
+
+			try
+			{
+				JsonDocument.Parse(text);
+				return true;
+			}
+			catch (JsonException)
+			{
+				return false;
 			}
 		}
 	}
